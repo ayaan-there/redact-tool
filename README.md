@@ -1,7 +1,6 @@
 # redact-tool — blur anything in any video, exactly what you specify
 
 `redact-tool` is a deterministic, local-only video redaction tool: give it a JSON
-`redact-tool` is a deterministic, local-only video redaction tool: give it a JSON
 **Job Spec** naming the words, faces, objects or regions to hide, and it masks
 exactly those targets — tracked across motion, scale, rotation and deformation —
 and nothing else. It is built to be driven by an LLM as a function/plugin (the
