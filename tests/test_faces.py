@@ -13,9 +13,9 @@ import cv2
 import numpy as np
 import pytest
 
-from src.vredact.apply import RenderState, apply_actions
-from src.vredact.faces import FaceDetector, associate
-from src.vredact.schema import parse_spec
+from src.redact_tool.apply import RenderState, apply_actions
+from src.redact_tool.faces import FaceDetector, associate
+from src.redact_tool.schema import parse_spec
 
 ASSET = Path(__file__).parent / "assets" / "lena.jpg"
 

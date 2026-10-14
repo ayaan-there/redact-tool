@@ -1,10 +1,11 @@
-# blur anything in any video, exactly what you specify
+# redact-tool — blur anything in any video, exactly what you specify
 
+`redact-tool` is a deterministic, local-only video redaction tool: give it a JSON
 `redact-tool` is a deterministic, local-only video redaction tool: give it a JSON
 **Job Spec** naming the words, faces, objects or regions to hide, and it masks
 exactly those targets — tracked across motion, scale, rotation and deformation —
 and nothing else. It is built to be driven by an LLM as a function/plugin (the
-model plans, VRedact executes), and works just as well from the command line.
+model plans, Redact-tool executes), and works just as well from the command line.
 
 Core principle: **redact only what is asked.** Over-redaction is treated as
 content loss and is avoided by design. A lost track stops instead of drifting
@@ -27,9 +28,9 @@ Modes per action: `black` (opaque), `pixelate`, `blur` (Gaussian), each gated by
 
 ```powershell
 pip install -r requirements.txt
-python vredact.py render --video in.mp4 --out out.mp4 --spec actions.json
-python vredact.py inspect --video in.mp4 --out inv.json   # eyes for planning
-python vredact.py verify --video out.mp4 --spec actions.json --source in.mp4
+python redact-tool.py render --video in.mp4 --out out.mp4 --spec actions.json
+python redact-tool.py inspect --video in.mp4 --out inv.json   # eyes for planning
+python redact-tool.py verify --video out.mp4 --spec actions.json --source in.mp4
 ```
 
 ### Finding the box for a moving image/object — `pick_region.py`
@@ -69,7 +70,7 @@ masked counts. `--help` lists everything.
 
 Give the model [TOOL.md](TOOL.md): the complete Job Spec schema, the four
 action primitives, and worked examples. The contract is simple — the LLM
-produces a spec (frame numbers, boxes, words, time windows), VRedact validates
+produces a spec (frame numbers, boxes, words, time windows), Redact-tool validates
 it field-by-field and renders deterministically. Unknown keys, bad boxes and
 out-of-range values fail fast before a single frame is touched.
 

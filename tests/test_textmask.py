@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.vredact.schema import BoxNorm, TextMatch
-from src.vredact.textmask import build_matcher, mask_text
+from src.redact_tool.schema import BoxNorm, TextMatch
+from src.redact_tool.textmask import build_matcher, mask_text
 
 
 def _line(words, x=10, y=10, gap=6, h=12):
@@ -101,9 +101,9 @@ def test_exclude_rect_fully_covering_word_counts_as_covered():
 
 
 def test_track_box_rect_excludes_text_mask_end_to_end():
-    from src.vredact.apply import RenderState, apply_actions
-    from src.vredact.masks import padded_rect
-    from src.vredact.schema import parse_spec
+    from src.redact_tool.apply import RenderState, apply_actions
+    from src.redact_tool.masks import padded_rect
+    from src.redact_tool.schema import parse_spec
 
     track = {"type": "track_box", "id": "t",
              "anchor_box_px": {"x": 30, "y": 70, "w": 60, "h": 60},

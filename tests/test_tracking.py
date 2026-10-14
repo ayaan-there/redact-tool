@@ -10,10 +10,10 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from src.vredact.apply import RenderState, apply_actions
-from src.vredact.faces import FaceDetector, associate
-from src.vredact.schema import parse_spec
-from src.vredact.tracking import Tracker
+from src.redact_tool.apply import RenderState, apply_actions
+from src.redact_tool.faces import FaceDetector, associate
+from src.redact_tool.schema import parse_spec
+from src.redact_tool.tracking import Tracker
 
 H, W = 240, 240
 

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.vredact.apply import RenderState, apply_actions
-from src.vredact.schema import parse_spec
+from src.redact_tool.apply import RenderState, apply_actions
+from src.redact_tool.schema import parse_spec
 
 
 def _pattern(height=100, width=200):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.vredact.schema import (
+from src.redact_tool.schema import (
     FixedBoxAction,
     SpecError,
     TextMaskAction,

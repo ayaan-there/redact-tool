@@ -227,7 +227,7 @@ def _main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(
         description="Execution-only video redaction tool. Takes a structured JSON spec.",
-        prog="vredact")
+        prog="redact-tool")
     if argv and argv[0] in ("render", "inspect", "verify"):
         subs = parser.add_subparsers(dest="command", required=True)
         _add_render_flags(subs.add_parser(

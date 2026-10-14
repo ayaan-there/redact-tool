@@ -1,11 +1,11 @@
-# VRedact Tool API (Execution-only)
+# Redact-tool Tool API (Execution-only)
 
-VRedact is designed to be called by an LLM as a function/plugin. It does NOT parse natural language. The LLM must emit a structured JSON spec.
+Redact-tool is designed to be called by an LLM as a function/plugin. It does NOT parse natural language. The LLM must emit a structured JSON spec.
 
 ## CLI
 
 ```bash
-python vredact.py --video input.mp4 --out output.mp4 --spec actions.json [--fresh] [--keep-audio] [--max-seconds N]
+python redact-tool.py --video input.mp4 --out output.mp4 --spec actions.json [--fresh] [--keep-audio] [--max-seconds N]
 ```
 
 - `--spec`: path to JSON spec (required)
@@ -142,12 +142,12 @@ hidden by the track's own mask).
 ## Commands
 
 ```powershell
-python vredact.py render --video in.mp4 --out out.mp4 --spec job.json [--fresh] [--keep-audio] [--max-seconds N]
-python vredact.py inspect --video in.mp4 [--every 15] [--out inv.json] [--no-text] [--no-faces] [--min-samples 2]
-python vredact.py verify --video out.mp4 --spec job.json --source in.mp4 [--report out.report.json] [--every 20]
+python redact-tool.py render --video in.mp4 --out out.mp4 --spec job.json [--fresh] [--keep-audio] [--max-seconds N]
+python redact-tool.py inspect --video in.mp4 [--every 15] [--out inv.json] [--no-text] [--no-faces] [--min-samples 2]
+python redact-tool.py verify --video out.mp4 --spec job.json --source in.mp4 [--report out.report.json] [--every 20]
 ```
 
-(Bare `python vredact.py --video ... --out ... --spec ...` still renders.)
+(Bare `python redact-tool.py --video ... --out ... --spec ...` still renders.)
 
 ### Region picker — `pick_region.py`
 

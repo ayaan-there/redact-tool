@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>redact-tool — give your no-vision model hands for video · redact PII blind</title>
+<meta name="description" content="redact-tool lets a text-only, no-vision LLM edit video: inspect without seeing, emit a JSON spec, render + verify. Faces, names, plates, addresses, chats — redacted exactly, locally, deterministically." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='22' fill='%23c8ff3d'/><circle cx='38' cy='42' r='7' fill='%2308090c'/><circle cx='62' cy='42' r='7' fill='%2308090c'/><rect x='28' y='60' width='44' height='10' rx='5' fill='%2308090c'/></svg>" />
+</head>
+<body>
+<div class="noise"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">◧</span>
+      <span class="brand-name">redact-tool</span>
+      <span class="brand-tag">v1</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#blind">Blind operator</a>
+      <a href="#capabilities">PII targets</a>
+      <a href="#demo">Live demo</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#llm">LLM API</a>
+    </nav>
+    <div class="nav-cta">
+      <span class="nav-pill"><span class="dot"></span>no-vision safe · local-only</span>
+      <a class="btn btn-small btn-lime" href="https://github.com/ayaan-there/redact-tool" target="_blank" rel="noopener">See the repo</a>
+      <button class="nav-burger" id="burger" aria-label="menu">☰</button>
+    </div>
+  </div>
+  <div class="nav-mobile" id="navMobile">
+    <a href="#blind">Blind operator</a>
+    <a href="#capabilities">PII targets</a>
+    <a href="#demo">Live demo</a>
+    <a href="#workflow">Workflow</a>
+    <a href="#llm">LLM API</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="grid-lines"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="reveal badge-row">
+          <span class="badge badge-lime">● for no-vision models · text in, edited video out</span>
+          <span class="badge badge-ghost">deterministic · local-only · 32 tests</span>
+        </div>
+        <h1 class="reveal hero-title">
+          Giving <span class="hl-lime">every model</span><br />
+          <span class="hl-dim">(including text-only)</span><br />
+          the ability to redact content from media.
+        </h1>
+        <p class="reveal hero-sub">
+          <strong>redact-tool</strong> is the hands for your blind operator: a text-only LLM
+          <em>never sees a single frame</em> — it reads an <em>inspect</em> inventory
+          (words, faces, boxes as JSON), emits a Job Spec, and redact-tool
+          <em>tracks &amp; masks the PII</em> — faces, names, plates, addresses, chats —
+          across motion, zoom and rotation. Lost track? It <em>stops</em>, never drifts onto innocents.
+        </p>
+        <div class="reveal hero-actions">
+          <a class="btn btn-lime btn-big" href="#blind">▷ See the blind loop</a>
+          <a class="btn btn-ghost btn-big" href="#demo">✦ Try the live demo</a>
+        </div>
+        <div class="reveal hero-cli">
+          <span class="prompt">$</span>
+          <span id="typedCmd"></span><span class="caret">▌</span>
+        </div>
+        <div class="reveal hero-stats">
+          <div class="stat"><span class="stat-num" data-count="4">0</span><span class="stat-label">action primitives</span></div>
+          <div class="stat"><span class="stat-num" data-count="3">0</span><span class="stat-label">mask modes</span></div>
+          <div class="stat"><span class="stat-num" data-count="100">0</span><span class="stat-label">% local, 0 frames leave disk</span></div>
+          <div class="stat"><span class="stat-num" data-count="32">0</span><span class="stat-label">regression tests</span></div>
+        </div>
+      </div>
+
+      <div class="reveal hero-visual">
+        <div class="player" id="player">
+          <div class="player-bar">
+            <span class="traffic"><i></i><i></i><i></i></span>
+            <span class="player-title">interview_final.mp4 — preview</span>
+            <span class="player-live"><span class="pulse"></span>TRACKING</span>
+          </div>
+          <div class="player-stage" id="playerStage">
+            <div class="scanline"></div>
+            <div class="scene-road"></div>
+            <div class="scene-person" id="scenePerson">
+              <div class="person-head"></div>
+              <div class="person-body"></div>
+            </div>
+            <div class="track-box tb-face" id="tbFace">
+              <span class="tb-label">◉ subject · face · blur 0.9</span>
+              <span class="tb-corner tl"></span><span class="tb-corner tr"></span>
+              <span class="tb-corner bl"></span><span class="tb-corner br"></span>
+              <span class="tb-mask"></span>
+            </div>
+            <div class="word-chip wc-1" id="wc1">anna@mail.com</div>
+            <div class="word-chip wc-2" id="wc2">MH·12·4821</div>
+            <div class="track-box tb-word" id="tbWord">
+              <span class="tb-label">▣ PII · plate · black</span>
+              <span class="tb-corner tl"></span><span class="tb-corner tr"></span>
+              <span class="tb-corner bl"></span><span class="tb-corner br"></span>
+              <span class="tb-mask"></span>
+            </div>
+            <div class="track-box tb-email" id="tbEmail">
+              <span class="tb-label">▣ PII · email · black</span>
+              <span class="tb-corner tl"></span><span class="tb-corner tr"></span>
+              <span class="tb-corner bl"></span><span class="tb-corner br"></span>
+              <span class="tb-mask"></span>
+            </div>
+            <div class="hud">
+              <div class="hud-row"><span>frame</span><strong id="hudFrame">0000</strong></div>
+              <div class="hud-row"><span>t</span><strong id="hudTime">0.00s</strong></div>
+              <div class="hud-row"><span>tracker</span><strong class="ok">CSRT ✓ locked</strong></div>
+            </div>
+          </div>
+          <div class="player-timeline">
+            <div class="tl-track">
+              <div class="tl-progress" id="tlProgress"></div>
+              <div class="tl-playhead" id="tlPlayhead"></div>
+              <div class="tl-mask-region"></div>
+            </div>
+            <div class="tl-meta">
+              <button class="tl-btn" id="heroPlayBtn">❚❚ pause</button>
+              <span class="tl-time"><span id="tlCur">0:00</span> / 0:32 · out.mp4 + out.report.json</span>
+              <span class="tl-modes"><i class="m-black">black</i><i class="m-blur">blur</i><i class="m-pix">pixelate</i></span>
+            </div>
+          </div>
+        </div>
+        <div class="player-caption">
+          <span class="cap-chip">✓ model never saw a frame</span>
+          <span class="cap-chip">✓ bystander face untouched</span>
+          <span class="cap-chip">✓ PII masked · neighbours sharp</span>
+        </div>
+      </div>
+    </div>
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="marqueeTrack">
+        <span>face → blurred</span><span>anna@mail.com <i class="mq-red"></i></span><span>plate MH·12·4821 <i class="mq-red"></i></span><span>+1 415 555 0132 <i class="mq-red"></i></span><span>"123 Main St" <i class="mq-red"></i></span><span>SSN •••-••-4821 <i class="mq-red"></i></span><span>chat leak contained ✓</span><span>no-vision LLM ✓</span><span>verify → exit 0 ✓</span><span>frames never leave disk ✓</span>
+      </div>
+    </div>
+    <div class="pii-strip">
+      <div class="wrap pii-row reveal">
+        <span class="pii-label">STRIPS OUT-OF-THE-BOX →</span>
+        <span class="pii-chip">faces</span><span class="pii-chip">names</span><span class="pii-chip">emails</span><span class="pii-chip">phones</span><span class="pii-chip">plates</span><span class="pii-chip">addresses</span><span class="pii-chip">usernames</span><span class="pii-chip">chat text</span><span class="pii-chip">documents</span><span class="pii-chip">photos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRINCIPLE ============ -->
+  <section class="section principle">
+    <div class="wrap">
+      <p class="kicker reveal">Core principle</p>
+      <h2 class="reveal big-quote">“Redact only what is asked.<br />Over-redaction is <span class="hl-lime">content loss</span>.”</h2>
+      <div class="principle-grid">
+        <div class="reveal p-card">
+          <div class="p-icon">◎</div>
+          <h3>Word-level precision</h3>
+          <p>OCR boxes matched by exact text — never whole lines. Neighbouring words stay razor sharp.</p>
+        </div>
+        <div class="reveal p-card">
+          <div class="p-icon">◉</div>
+          <h3>Track, don't drift</h3>
+          <p>CSRT + anchor appearance check. Teleports rejected, look-alikes ignored, lost tracks stop cold.</p>
+        </div>
+        <div class="reveal p-card">
+          <div class="p-icon">⬣</div>
+          <h3>Faces are sacred</h3>
+          <p>Detector-assisted <code>target: "face"</code> masks only the overlapping detection. Every other face provably untouched.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BLIND OPERATOR ============ -->
+  <section class="section blind" id="blind">
+    <div class="wrap">
+      <p class="kicker reveal">The blind-operator loop — how a no-vision model edits video</p>
+      <h2 class="reveal section-title">Blind model. <span class="hl-lime">Sighted tools.</span> <span class="dim">Zero frames sent anywhere.</span></h2>
+      <p class="reveal section-sub">Your LLM has <b>no eyes</b> — it can never open the .mp4. So redact-tool becomes its eyes and hands: <code>inspect</code> translates pixels into <b>words it can read</b> (JSON text), the model reasons over that text, and <code>render</code> + <code>verify</code> execute + prove the edit. This is the whole trick — make video editable as pure text.</p>
+      <div class="blind-grid">
+        <div class="reveal blind-terminal">
+          <div class="term-bar"><span class="traffic"><i></i><i></i><i></i></span><span>agent log — text-only model, no vision</span><span class="blind-eye">⊘ vision off</span></div>
+          <div class="blind-lines" id="blindLines"></div>
+        </div>
+        <div class="reveal blind-steps">
+          <div class="b-step"><span class="b-n">1</span><div><h4>👁→📝 inspect <span class="b-tag">pixels → text</span></h4><p>Samples frames, returns JSON: <code>texts[]</code> with words + runs, <code>faces[]</code> with tracklets + boxes. The model finally “sees” — as text.</p></div></div>
+          <div class="b-step"><span class="b-n">2</span><div><h4>🙋 ground with the user <span class="b-tag">never guess</span></h4><p>Two faces? “Top-left (0–4s) or right column (9–15s)?” The model <b>stops and asks</b> — a wrong guess leaks PII or vandalises content.</p></div></div>
+          <div class="b-step"><span class="b-n">3</span><div><h4>📦 anchor without seeing <span class="b-tag">JSON only</span></h4><p>Face anchor = tracklet <code>start_box @ first_frame</code>. Object anchor = user / <code>pick_region.py</code> pixels. Timestamps via inventoried fps. Nothing invented.</p></div></div>
+          <div class="b-step"><span class="b-n">4</span><div><h4>⚙️ render + ✓ verify <span class="b-tag">prove it</span></h4><p>Validate → mask → rescan output for leftovers + retrace tracks. <code>exit 0</code> = ship. <code>text_leftovers</code> = tighten spec, never ship.</p></div></div>
+          <div class="blind-guarantee">🔒 frames + OCR text stay on your disk · PaddleOCR local · YuNet/Haar on CPU · nothing sent to any remote service</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CAPABILITIES ============ -->
+  <section class="section" id="capabilities">
+    <div class="wrap">
+      <p class="kicker reveal">PII it can strip</p>
+      <h2 class="reveal section-title">Faces, words, objects, regions. <span class="dim">If it's PII, there's a primitive for it.</span></h2>
+      <div class="cards">
+        <article class="reveal card tilt">
+          <div class="card-top"><span class="card-emoji">🔤</span><span class="card-id">01 · text_mask</span></div>
+          <h3>Names, emails, chats</h3>
+          <p>Word-level PaddleOCR <b>PP-OCRv6 medium</b> — match PII by exact text (<code>contains / regex / terms</code>), never whole lines. Scope to a chat pane to keep the rest intact.</p>
+          <div class="mini-words"><span>invoice</span><span class="struck">anna@mail.com</span><span>total</span><span>€ 42.10</span></div>
+          <code class="mini-code">match: { regex: ["\\S+@\\S+"] }</code>
+        </article>
+        <article class="reveal card tilt">
+          <div class="card-top"><span class="card-emoji">🙂</span><span class="card-id">02 · track_box + face</span></div>
+          <h3>Bystanders & subjects</h3>
+          <p>Detector-assisted tracking follows turning, zooming faces. Only the overlapping detection is masked — every other face provably untouched.</p>
+          <div class="mini-faces"><span class="face f-blur">🙂</span><span class="face">🙂</span><span class="face">🙂</span></div>
+          <code class="mini-code">target: "face" · stop_tracking</code>
+        </article>
+        <article class="reveal card tilt">
+          <div class="card-top"><span class="card-emoji">🖼️</span><span class="card-id">03 · track_box + object</span></div>
+          <h3>Plates, badges, photos</h3>
+          <p>One anchor box → adaptive CSRT follows translation, 1.5× zoom, 30° rotation, shear. Teleports &amp; look-alikes rejected; lost stays lost.</p>
+          <div class="mini-track"><div class="mini-box"></div></div>
+          <code class="mini-code">anchor_frame: 0 · anchor_box_px</code>
+        </article>
+        <article class="reveal card tilt">
+          <div class="card-top"><span class="card-emoji">▦</span><span class="card-id">04 · fixed_box / region</span></div>
+          <h3>Overlays & UI chrome</h3>
+          <p>Static boxes for a time window — watermarks, usernames, sidebars, fixed documents. Coarse, fast, safe.</p>
+          <div class="mini-region"></div>
+          <code class="mini-code">when: { from: 9.0, to: 15.5 }</code>
+        </article>
+      </div>
+
+      <div class="reveal modes">
+        <div class="mode mode-black"><span class="mode-swatch"></span><div><h4>black</h4><p>opaque · unrecoverable. Choose per risk.</p></div></div>
+        <div class="mode mode-blur"><span class="mode-swatch"></span><div><h4>blur</h4><p>Gaussian · <code>blur_strength 0–1</code>. Obscures.</p></div></div>
+        <div class="mode mode-pix"><span class="mode-swatch"></span><div><h4>pixelate</h4><p>mosaic · obscures. Fast &amp; legible-proof.</p></div></div>
+        <div class="mode mode-when"><span class="mode-swatch">⏱</span><div><h4>gated by time</h4><p><code>"always"</code> · <code>{from, to}</code> · <code>{intervals}</code></p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INTERACTIVE DEMO ============ -->
+  <section class="section demo" id="demo">
+    <div class="wrap">
+      <p class="kicker reveal">Interactive demo — simulated blind edit</p>
+      <h2 class="reveal section-title">You play the blind model. <span class="dim">Text in, PII gone.</span></h2>
+      <p class="reveal section-sub">This simulates the real renderer: the “model” only gets text (face tracklets + OCR words). Pick a mask mode per PII target, hit play, watch the boxes ride the motion — the bystander is never touched, exactly like <code>verify</code> proves.</p>
+
+      <div class="reveal demo-shell">
+        <div class="demo-stage" id="demoStage">
+          <div class="demo-scan"></div>
+          <div class="demo-actor" id="demoActor"><span>SUBJECT · PII</span></div>
+          <div class="demo-bystander"><span>BYSTANDER — never PII</span></div>
+          <div class="demo-doc" id="demoDoc"><span>…contact <b>anna@mail.com</b> · MH·12·4821…</span></div>
+          <div class="demo-box demo-face" id="demoFaceBox"><label>subject · <span id="demoFaceMode">blur</span></label></div>
+          <div class="demo-box demo-text" id="demoTextBox"><label>PII · <span id="demoTextMode">black</span></label></div>
+          <div class="demo-toast" id="demoToast">tracker locked · frame 0</div>
+        </div>
+        <aside class="demo-panel">
+          <div class="demo-controls">
+            <div class="ctl-group">
+              <p class="ctl-title">◉ subject face — PII track</p>
+              <div class="seg" data-target="face">
+                <button data-mode="black">black</button>
+                <button data-mode="blur" class="active">blur</button>
+                <button data-mode="pixelate">pixelate</button>
+              </div>
+            </div>
+            <div class="ctl-group">
+              <p class="ctl-title">▣ email + plate — PII words</p>
+              <div class="seg" data-target="text">
+                <button data-mode="black" class="active">black</button>
+                <button data-mode="blur">blur</button>
+                <button data-mode="pixelate">pixelate</button>
+              </div>
+            </div>
+            <div class="ctl-row">
+              <button class="btn btn-lime btn-small" id="demoPlay">❚❚ pause</button>
+              <button class="btn btn-ghost btn-small" id="demoLose">simulate track loss</button>
+            </div>
+          </div>
+          <div class="demo-log" id="demoLog"></div>
+          <div class="demo-report">
+            <div><span>subject face</span><strong id="repFace">0 frames</strong></div>
+            <div><span>PII words</span><strong id="repText">0 words</strong></div>
+            <div><span>bystander</span><strong class="ok">0 touched ✓</strong></div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- before / after -->
+      <div class="reveal compare">
+        <div class="compare-head">
+          <h3>Drag the handle — PII before / after</h3>
+          <p>Same frame. Left: raw source with exposed PII. Right: <code>out.mp4</code> after blind <code>render</code>.</p>
+        </div>
+        <div class="compare-stage" id="compareStage">
+          <div class="compare-layer compare-before">
+            <div class="cmp-face">🙂</div>
+            <div class="cmp-plate">anna@mail.com · MH·12·4821</div>
+            <div class="cmp-tag">BEFORE · PII exposed</div>
+          </div>
+          <div class="compare-layer compare-after" id="compareAfter">
+            <div class="cmp-face masked-blur">🙂</div>
+            <div class="cmp-plate"><b class="redacted">••••••••••••</b> · <b class="redacted">••••••••</b></div>
+            <div class="cmp-tag">AFTER · PII gone</div>
+          </div>
+          <div class="compare-handle" id="compareHandle"><span>‹ ›</span></div>
+          <input type="range" min="0" max="100" value="50" id="compareRange" aria-label="compare slider" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORKFLOW ============ -->
+  <section class="section" id="workflow">
+    <div class="wrap">
+      <p class="kicker reveal">Pipeline — built for blind agents</p>
+      <h2 class="reveal section-title">Inspect → Specify → Render → Verify. <span class="dim">No eyes required.</span></h2>
+      <div class="steps">
+        <div class="reveal step">
+          <span class="step-n">1</span>
+          <h3>👁 inspect <span class="step-sub">eyes for planning</span></h3>
+          <p>Samples every Nth frame → JSON inventory: video dims, distinct words with runs, face tracklets with start/end boxes.</p>
+          <code>python redact-tool.py inspect --video in.mp4 --out inv.json</code>
+        </div>
+        <div class="reveal step">
+          <span class="step-n">2</span>
+          <h3>🎯 pick_region <span class="step-sub">anchor with pixels</span></h3>
+          <p>Opens the frame at <code>--time 00:00:02.5</code>. Drag a rectangle, press <kbd>S</kbd> — exact <code>x, y, w, h</code> for your <code>track_box</code>.</p>
+          <code>python pick_region.py --input Test.mp4 --time 00:00:02.5</code>
+        </div>
+        <div class="reveal step">
+          <span class="step-n">3</span>
+          <h3>⚙ render <span class="step-sub">deterministic</span></h3>
+          <p>Validates the spec field-by-field, fails fast on bad boxes. Emits <code>out.mp4</code> + <code>out.report.json</code>. Never overwrites input.</p>
+          <code>python redact-tool.py render --video in.mp4 --out out.mp4 --spec actions.json</code>
+        </div>
+        <div class="reveal step">
+          <span class="step-n">4</span>
+          <h3>✓ verify <span class="step-sub">prove it</span></h3>
+          <p>Rescans output for readable leftovers, retraces each track. Exit 0 = ship. Exit 1 + <code>text_leftovers</code> = tighten spec.</p>
+          <code>python redact-tool.py verify --video out.mp4 --spec actions.json --source in.mp4</code>
+        </div>
+      </div>
+      <div class="reveal flags">
+        <span><code>--fresh</code> discard resume frames</span>
+        <span><code>--keep-audio</code> keep audio (off by default)</span>
+        <span><code>--max-seconds N</code> preview first N s</span>
+        <span><code>--help</code> lists everything</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUICKSTART / SPEC ============ -->
+  <section class="section quickstart" id="quickstart">
+    <div class="wrap qs-grid">
+      <div>
+        <p class="kicker reveal">Quickstart</p>
+        <h2 class="reveal section-title">One spec.<br />Three commands.</h2>
+        <p class="reveal section-sub">What the blind model emits: track the subject face wherever it goes, black out emails + plates, touch nothing else:</p>
+        <div class="reveal install">
+          <div class="install-row"><span>$</span><code>pip install -r requirements.txt</code><button class="copy" data-copy="pip install -r requirements.txt">copy</button></div>
+          <p class="req">Windows 10/11 · Python 3.11+ · FFmpeg + FFprobe on PATH · opencv-contrib · numpy · PaddleOCR PP-OCRv6 medium (GPU build pinned)</p>
+        </div>
+        <div class="reveal term">
+          <div class="term-bar"><span class="traffic"><i></i><i></i><i></i></span><span>powershell — redact-tool</span></div>
+          <pre id="termBody"></pre>
+        </div>
+      </div>
+      <div class="reveal spec-card">
+        <div class="spec-tabs">
+          <button class="active" data-spec="full">actions.json</button>
+          <button data-spec="track">track_box</button>
+          <button data-spec="text">text_mask</button>
+          <button data-spec="fixed">fixed_box</button>
+        </div>
+        <pre class="spec-body" id="specBody"></pre>
+        <div class="spec-foot">
+          <span id="specNote">blind spec: face track + PII regex mask</span>
+          <button class="copy" data-copy-spec="1">copy json</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LLM ============ -->
+  <section class="section" id="llm">
+    <div class="wrap llm-grid">
+      <div>
+        <p class="kicker reveal">Built for no-vision models</p>
+        <h2 class="reveal section-title">The model plans in text.<br /><span class="hl-lime">Redact-tool edits the pixels.</span></h2>
+        <p class="reveal section-sub">Give any text-only model <code>TOOL.md</code>: the Job Spec schema, four PII primitives, worked examples. It never parses video — it emits frame numbers, boxes, PII strings and time windows; Redact-tool validates field-by-field and renders deterministically. Unknown keys and out-of-range values fail fast before a single frame is touched.</p>
+        <ul class="reveal llm-rules">
+          <li><b>Execution-only</b> — never infers PII beyond what the user asked. No guessing faces.</li>
+          <li><b>Blind-safe</b> — every box grounded in <code>inspect</code> or user pixels; invented coordinates fail validation.</li>
+          <li><b>Leaking chat?</b> — <code>region_mask</code> (fast/safe) or <code>text_mask</code> scoped to the chat region with regex PII match.</li>
+          <li><b>Report like a planner</b> — frames masked, what <code>verify</code> proved, what’s left — numbers, not adjectives.</li>
+        </ul>
+      </div>
+      <div class="reveal llm-card">
+        <div class="llm-flow">
+          <div class="llm-node">👤 user<br /><span>“remove her face + any emails and plates”</span></div>
+          <div class="llm-arrow">↓</div>
+          <div class="llm-node accent">🤖 blind LLM + TOOL.md ⊘<br /><span>reads inspect JSON → emits Job Spec</span></div>
+          <div class="llm-arrow">↓</div>
+          <div class="llm-node ok">◧ redact-tool<br /><span>validate → render → verify · exit 0</span></div>
+        </div>
+        <div class="llm-schema">
+          <span>version</span><span>ocr: paddle</span><span>defaults</span><span>actions[]</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTS + LIMITS ============ -->
+  <section class="section">
+    <div class="wrap two-col">
+      <div class="reveal panel">
+        <p class="kicker">Proven, not promised</p>
+        <h3>32 tests. Adversarial by design.</h3>
+        <div class="test-grid">
+          <span>spec validation</span><span>word precision</span><span>translation</span><span>1.5× zoom</span><span>30° rotation</span><span>shear</span><span>exit-and-stay-lost</span><span>distractor rejection</span><span>teleport rejection</span><span>real-face follow</span><span>rotated faces</span><span class="hot">2nd face untouched ✓</span>
+        </div>
+        <code class="mini-code">python -m pytest tests -q &nbsp;# 32 tests</code>
+      </div>
+      <div class="reveal panel warn">
+        <p class="kicker">Limitations — read before shipping</p>
+        <h3>Honest redaction.</h3>
+        <ul>
+          <li>Only as good as the spec — not a guarantee of anonymity.</li>
+          <li>OCR can miss text; <code>text_mask</code> matches whatever OCR reads — always review.</li>
+          <li><code>blur</code>/<code>pixelate</code> obscure; only <code>black</code> is unrecoverable.</li>
+          <li>Lost stays lost — re-entry needs a new action + anchor.</li>
+          <li>Always review the exported video before sharing.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
+  <section class="section cta">
+    <div class="wrap">
+      <div class="reveal cta-box">
+        <h2>Let your blind model ship shareable video.<br />PII gone. Story intact.</h2>
+        <p>No-vision safe · local-only · deterministic · CLI-first · verify-or-don't-ship.</p>
+        <div class="hero-actions" style="justify-content:center">
+          <a class="btn btn-lime btn-big" href="https://github.com/ayaan-there/redact-tool" target="_blank" rel="noopener">See the repo →</a>
+          <a class="btn btn-ghost btn-big" href="#blind">See the blind loop</a>
+        </div>
+        <p class="cta-note"><code>--fresh</code> · <code>--keep-audio</code> · <code>--max-seconds N</code> · never overwrites input · emits <code>out.report.json</code></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div><span class="brand-mark">◧</span> <b>redact-tool</b> · hands for no-vision models — redact PII blind.</div>
+    <div class="foot-links"><span>TOOL.md is the API</span><span>·</span><span>frames never leave your machine</span></div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
