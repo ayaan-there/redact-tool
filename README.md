@@ -1,6 +1,6 @@
 # blur anything in any video, exactly what you specify
 
-`vredact` is a deterministic, local-only video redaction tool: give it a JSON
+`redact-tool` is a deterministic, local-only video redaction tool: give it a JSON
 **Job Spec** naming the words, faces, objects or regions to hide, and it masks
 exactly those targets — tracked across motion, scale, rotation and deformation —
 and nothing else. It is built to be driven by an LLM as a function/plugin (the
@@ -94,7 +94,7 @@ moving face, rotated faces, second face provably untouched).
 
 ## Limitations (read before shipping)
 
-- Redaction is only as good as the spec; it is not a guarantee of anonymity.
+- Redaction is only as good as the spec; it is not a guarantee.
 - OCR can miss text; `text_mask` matches whatever OCR reads — always review.
 - `blur`/`pixelate` obscure; only `black` is unrecoverable. Choose per risk.
 - A track that is lost stays lost: something leaving and re-entering needs a
