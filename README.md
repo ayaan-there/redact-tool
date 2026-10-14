@@ -1,4 +1,4 @@
-# vredact — blur anything in any video, exactly what you specify
+# blur anything in any video, exactly what you specify
 
 `vredact` is a deterministic, local-only video redaction tool: give it a JSON
 **Job Spec** naming the words, faces, objects or regions to hide, and it masks
