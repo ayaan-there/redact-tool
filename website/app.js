@@ -122,6 +122,7 @@
 
   /* ---------- DEMO stage ---------- */
   const dActor = $("#demoActor"), dFace = $("#demoFaceBox"), dDoc = $("#demoDoc"), dText = $("#demoTextBox");
+  const dBy = document.querySelector(".demo-bystander");
   const dPlay = $("#demoPlay"), dLose = $("#demoLose"), dLog = $("#demoLog"), dToast = $("#demoToast");
   const repF = $("#repFace"), repT = $("#repText");
   let dPlaying = true, dT = 0, dLost = false, fCount = 0, wCount = 0;
@@ -179,12 +180,14 @@
     if (dPlaying && dActor) {
       dT += dt;
       const st = $("#demoStage"), W = st.clientWidth;
-      const ax = W * 0.06 + (W * 0.34) * (0.5 + 0.5 * Math.sin(dT * 0.22));
+      const sr = st.getBoundingClientRect();
+      const span = Math.max(0, Math.min(W * 0.34,
+        (dBy ? dBy.getBoundingClientRect().left - sr.left : W) - dActor.offsetWidth - 20));
+      const ax = 8 + span * (0.5 + 0.5 * Math.sin(dT * 0.22));
       dActor.style.left = ax + "px";
       dActor.style.transform = `rotate(${Math.sin(dT * 0.45) * 1.5}deg)`;
       dDoc.style.transform = `translateX(calc(-50% + ${Math.sin(dT * 0.35) * 24}px))`;
       // masks measured from live layout so they sit exactly on target at any size
-      const sr = st.getBoundingClientRect();
       const ar = dActor.getBoundingClientRect();
       const FW = 112, FH = 126;
       dFace.style.width = FW + "px"; dFace.style.height = FH + "px";
