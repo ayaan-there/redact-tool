@@ -1,0 +1,40 @@
+__version__ = "0.3.0"
+
+from .schema import (
+    Action,
+    BoxNorm,
+    BoxPx,
+    Defaults,
+    FixedBoxAction,
+    JobSpec,
+    Padding,
+    RegionMaskAction,
+    SpecError,
+    TextMaskAction,
+    TrackBoxAction,
+    When,
+    WhenIntervals,
+    WhenWindow,
+    parse_spec,
+    when_covers,
+)
+
+__all__ = [
+    "__version__",
+    "Action",
+    "BoxNorm",
+    "BoxPx",
+    "Defaults",
+    "FixedBoxAction",
+    "JobSpec",
+    "Padding",
+    "RegionMaskAction",
+    "SpecError",
+    "TextMaskAction",
+    "TrackBoxAction",
+    "When",
+    "WhenIntervals",
+    "WhenWindow",
+    "parse_spec",
+    "when_covers",
+]

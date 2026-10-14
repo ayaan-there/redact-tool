@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "ocr": { "engine": "paddle", "device": "gpu:0" },
+  "defaults": { "mode": "blur", "blur_strength": 0.95 },
+  "actions": [
+    {
+      "type": "text_mask",
+      "id": "word_bc",
+      "when": "always",
+      "match": { "contains": ["bc"] },
+      "mode": "blur",
+      "blur_strength": 0.95
+    },
+    {
+      "type": "text_mask",
+      "id": "word_lund",
+      "when": "always",
+      "match": { "contains": ["lund"] },
+      "mode": "blur",
+      "blur_strength": 0.95
+    },
+    {
+      "type": "fixed_box",
+      "id": "image_B_entry",
+      "when": { "from": 1.81, "to": 1.905 },
+      "box_px": { "x": 267, "y": 90, "w": 90, "h": 160 },
+      "mode": "blur",
+      "blur_strength": 0.95
+    },
+    {
+      "type": "track_box",
+      "id": "image_B",
+      "when": "always",
+      "anchor_frame": 95,
+      "anchor_box_px": { "x": 272, "y": 99, "w": 85, "h": 149 },
+      "mode": "blur",
+      "blur_strength": 0.95,
+      "track_lost_behavior": "stop_tracking"
+    }
+  ]
+}
